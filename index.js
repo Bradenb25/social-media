@@ -13,41 +13,66 @@ const app = express();
 
 
 app.set('view engine', 'ejs');
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/', (req, res) => res.render('pages/postal-form'));
 
 app.get('/getRate', function(req, res) {
   let weight = req.query.weight;
   let type = req.query.type;
+  let amount = req.query.amount;
   let cost = 0;
-  // res.write('' + Math.ceil(weight));
+  let message = '';
+
+  console.log('' + weight);
+  console.log('' + type);
+  console.log('' + amount);
+
   if (type && weight) {
     weight = Math.ceil(weight);
     switch(type) {
       case 'Letters (Stamped)':
-        cost = getLettersStamped(weight);
+        cost = getLettersStampedCost(weight, amount);
+        message = getMessage(type, amount, cost);
       break;
 
       case 'Letters (Metered)':
-        cost = getLettersMetered(weight);
+        cost = getLettersMeteredCost(weight, amount);
+        message = getMessage(type, amount, cost);
       break;
 
       case 'Large Envelopes (Flats)':
-        cost = getLargeEnvelopes(weight);
+        cost = getLargeEnvelopesCost(weight, amount);
+        message = getMessage(type, amount, cost);
       break;
 
       case 'First-Class Package Service—Retail':
-        cost = getFirstClass(weight);
+        cost = getFirstClassCost(weight, amount);
+        message = getMessage(type, amount, cost);
       break;
 
       default:
         break;
     }
   }
-  res.write(cost);
+  // res.render('pages/postal-result', {
+  //   message: message
+  // });
+  res.send(message);
   res.end();
 });
 
-function getLettersStamped(weight) {
+function getMessage(type, amount, cost) {
+  let message = '';
+  if (cost != undefined) {
+    message = `The total cost for ${amount} ${type} is $${(amount * cost).toFixed(2)}`;
+  } else {
+    message = `There was an error processing your result, check to make sure all values were entered`;
+  }
+  return message;
+}
+
+function getLettersStampedCost(weight) {
   let values = new Map();
   values.set(1, .5);
   values.set(2, .71);
@@ -55,21 +80,21 @@ function getLettersStamped(weight) {
   values.set(3.5, 1.13);
 
   let cost = values.get(weight);
-  return (cost != undefined) ? 'Total cost is $' + cost : 'Too heavy for Letters (Stamped)';
+  return cost;
 }
 
-function getLettersMetered(weight) {
+function getLettersMeteredCost(weight, amount) {
   let values = new Map();
   values.set(1, .47);
   values.set(2, .68);
   values.set(3, .89);
   values.set(3.5, 1.10);
 
-  let cost = values.get(weight);
-  return (cost != undefined) ? 'Total cost is $' + cost : 'Too heavy for Letters (Metered)';
+  let cost = values.get(weight, amount);
+  return cost;
 }
 
-function getLargeEnvelopes(weight) {
+function getLargeEnvelopesCost(weight, amount) {
   let values = new Map();
   values.set(1, 1.0);
   values.set(2, 1.21);
@@ -86,10 +111,10 @@ function getLargeEnvelopes(weight) {
   values.set(13, 3.52);
 
   let cost = values.get(weight);
-  return (cost != undefined) ? 'Total cost is $' + cost : 'Too heavy for Large Envelopes';
+  return cost;
 }
 
-function getFirstClass(weight) {
+function getFirstClassCost(weight, amount) {
   let values = new Map();
   values.set(1, 3.5);
   values.set(2, 3.5);
@@ -103,10 +128,10 @@ function getFirstClass(weight) {
   values.set(10, 4.45);
   values.set(11, 4.80);
   values.set(12, 5.15);
-  values.set(13, 3.52);
+  values.set(13, 5.5);
 
   let cost = values.get(weight);
-  return (cost != undefined) ? 'Total cost is $' + cost : 'Too heavy for First Class';
+  return cost;
 }
 
 app.listen(PORT);
