@@ -64,8 +64,11 @@ app.get('/getRate', function(req, res) {
 
 function getMessage(type, amount, cost) {
   let message = '';
-  if (cost != undefined) {
+  console.log(cost);
+  if (cost != undefined && !isNaN(cost)) {
     message = `The total cost for ${amount} ${type} is $${(amount * cost).toFixed(2)}`;
+  } else if (cost != undefined && isNaN(cost)) {
+    message = `Unfortunately the package type ${type} can only ship ${cost}`;
   } else {
     message = `There was an error processing your result, check to make sure all values were entered`;
   }
@@ -80,7 +83,7 @@ function getLettersStampedCost(weight) {
   values.set(3.5, 1.13);
 
   let cost = values.get(weight);
-  return cost;
+  return cost != undefined ? cost : '1-3.5 oz';
 }
 
 function getLettersMeteredCost(weight, amount) {
@@ -91,7 +94,7 @@ function getLettersMeteredCost(weight, amount) {
   values.set(3.5, 1.10);
 
   let cost = values.get(weight, amount);
-  return cost;
+  return cost != undefined ? cost : '1-3.5 oz';
 }
 
 function getLargeEnvelopesCost(weight, amount) {
@@ -111,7 +114,7 @@ function getLargeEnvelopesCost(weight, amount) {
   values.set(13, 3.52);
 
   let cost = values.get(weight);
-  return cost;
+  return cost != undefined ? cost : '1-13 oz';
 }
 
 function getFirstClassCost(weight, amount) {
@@ -131,7 +134,7 @@ function getFirstClassCost(weight, amount) {
   values.set(13, 5.5);
 
   let cost = values.get(weight);
-  return cost;
+  return cost != undefined ? cost : '1-13 oz';
 }
 
 app.listen(PORT);
